@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CareerSync AI — AI Career Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  :root{
+    --void:#06070c;
+    --void-2:#0a0c15;
+    --panel:#10121c;
+    --panel-line:rgba(255,255,255,0.08);
+    --ink:#eef1f7;
+    --ink-dim:#8b91a7;
+    --ink-faint:#565c72;
+    --aqua:#4fe8d0;
+    --aqua-dim:rgba(79,232,208,0.14);
+    --violet:#9b7bff;
+    --violet-dim:rgba(155,123,255,0.14);
+    --amber:#ffb454;
+    --rose:#ff5c7a;
+    --radius-lg:22px;
+    --radius-md:14px;
+    --radius-sm:9px;
+    color-scheme: dark;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{background:var(--void);}
+  body{
+    background:var(--void);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,h4,.display{font-family:'Space Grotesk',sans-serif;}
+  a{color:inherit;}
+  button{font-family:inherit; cursor:pointer;}
+  ::selection{background:var(--violet); color:#06070c;}
+  ::-webkit-scrollbar{width:10px; height:10px;}
+  ::-webkit-scrollbar-track{background:var(--void);}
+  ::-webkit-scrollbar-thumb{background:#1c2032; border-radius:8px;}
+  :focus-visible{outline:2px solid var(--aqua); outline-offset:2px; border-radius:4px;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important;}
+  }
+
+  .glass{
+    background:linear-gradient(160deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015));
+    border:1px solid var(--panel-line);
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+  }
+
+  /* ---------- overlay wash ---------- */
+  .grain{position:fixed; inset:0; pointer-events:none; z-index:2;
+    background-image:radial-gradient(circle at 18% 12%, rgba(155,123,255,0.10), transparent 42%),
+                      radial-gradient(circle at 84% 76%, rgba(79,232,208,0.08), transparent 45%);
+  }
+
+  /* ---------- top marketing nav ---------- */
+  #marketingNav{
+    position:fixed; top:0; left:0; right:0; z-index:40;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 5vw;
+    transition:background .4s ease, border-color .4s ease;
+    border-bottom:1px solid transparent;
+  }
+  #marketingNav.scrolled{background:rgba(6,7,12,0.72); backdrop-filter:blur(14px); border-color:var(--panel-line);}
+  .brand{display:flex; align-items:center; gap:10px; font-weight:700; font-size:1.05rem; letter-spacing:0.01em;}
+  .brand-mark{width:30px; height:30px; border-radius:9px; background:conic-gradient(from 200deg, var(--aqua), var(--violet), var(--aqua)); display:flex; align-items:center; justify-content:center; font-size:.8rem; color:#06070c; font-weight:700;}
+  .nav-links{display:flex; gap:34px; font-size:.92rem; color:var(--ink-dim);}
+  .nav-links a{text-decoration:none; transition:color .2s;}
+  .nav-links a:hover{color:var(--ink);}
+  .nav-cta{display:flex; align-items:center; gap:14px;}
+  .live-chip{display:flex; align-items:center; gap:7px; font-size:.74rem; color:var(--ink-dim); border:1px solid var(--panel-line); padding:6px 12px; border-radius:99px;}
+  .live-dot{width:6px; height:6px; border-radius:50%; background:var(--aqua); box-shadow:0 0 10px var(--aqua); animation:pulse 1.8s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;} 50%{opacity:.35;}}
+
+  .btn{
+    border:none; border-radius:99px; padding:13px 26px; font-size:.92rem; font-weight:600;
+    display:inline-flex; align-items:center; gap:8px; transition:transform .2s ease, box-shadow .2s ease, background .2s;
+  }
+  .btn-primary{background:linear-gradient(120deg, var(--aqua), var(--violet)); color:#06070c;}
+  .btn-primary:hover{transform:translateY(-2px); box-shadow:0 10px 30px -8px rgba(155,123,255,0.55);}
+  .btn-ghost{background:transparent; color:var(--ink); border:1px solid var(--panel-line);}
+  .btn-ghost:hover{border-color:var(--aqua); color:var(--aqua);}
+  .btn-sm{padding:9px 16px; font-size:.8rem;}
+  .btn-danger{background:rgba(255,92,122,0.12); color:var(--rose); border:1px solid rgba(255,92,122,0.3);}
+  .btn-danger:hover{background:rgba(255,92,122,0.2);}
+  .btn:disabled{opacity:.4; cursor:not-allowed; transform:none;}
+
+  /* ---------- pages ---------- */
+  .page{display:none; min-height:100vh;}
+  .page.active{display:block; animation:pageIn .5s ease both;}
+  @keyframes pageIn{from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);}}
+
+  /* ========== LANDING ========== */
+  #page-landing{position:relative;}
+  .hero{
+    position:relative; min-height:100vh; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:120px 6vw 80px;
+    overflow:hidden;
+  }
+  #particleCanvas{position:absolute; inset:0; z-index:0; opacity:0.85;}
+  .hero-content{position:relative; z-index:1; max-width:980px;}
+  .hero-eyebrow{display:inline-flex; align-items:center; gap:8px; font-size:.82rem; color:var(--ink-dim); border:1px solid var(--panel-line); padding:7px 16px; border-radius:99px; margin-bottom:28px;}
+  .hero h1{
+    font-size:clamp(2.6rem, 7vw, 5.6rem); line-height:1.02; font-weight:700; letter-spacing:-0.02em;
+  }
+  .kinetic-word{display:inline-block; transition:transform .12s ease-out;}
+  .hero-grad{background:linear-gradient(100deg, var(--aqua), var(--violet)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .hero p.lead{max-width:560px; margin:28px auto 40px; color:var(--ink-dim); font-size:1.08rem; line-height:1.6;}
+  .hero-actions{display:flex; gap:16px; justify-content:center; flex-wrap:wrap;}
+  .hero-scroll{position:absolute; bottom:34px; left:50%; transform:translateX(-50%); font-size:.75rem; color:var(--ink-faint); display:flex; flex-direction:column; align-items:center; gap:8px;}
+  .scroll-line{width:1px; height:34px; background:linear-gradient(var(--aqua), transparent); animation:scrollLine 1.8s infinite;}
+  @keyframes scrollLine{0%{opacity:0; transform:scaleY(0);} 40%{opacity:1; transform:scaleY(1);} 100%{opacity:0; transform:scaleY(1);}}
+
+  .marquee-strip{border-top:1px solid var(--panel-line); border-bottom:1px solid var(--panel-line); overflow:hidden; padding:16px 0; background:var(--void-2);}
+  .marquee-track{display:flex; gap:60px; width:max-content; animation:marquee 26s linear infinite; font-family:'Space Grotesk',sans-serif; font-size:1rem; color:var(--ink-faint); white-space:nowrap;}
+  .marquee-track span{display:flex; align-items:center; gap:14px;}
+  .marquee-track .dot{width:5px; height:5px; border-radius:50%; background:var(--violet);}
+  @keyframes marquee{from{transform:translateX(0);} to{transform:translateX(-50%);}}
+
+  .section{padding:120px 6vw; max-width:1240px; margin:0 auto;}
+  .section-head{max-width:640px; margin-bottom:64px;}
+  .section-tag{color:var(--aqua); font-size:.85rem; font-weight:600; margin-bottom:14px;}
+  .section-head h2{font-size:clamp(1.9rem, 3.6vw, 2.8rem); font-weight:600; letter-spacing:-0.01em; line-height:1.18;}
+  .section-head p{color:var(--ink-dim); margin-top:16px; font-size:1.02rem; line-height:1.6;}
+
+  .feature-row{display:grid; grid-template-columns:1.1fr 1.4fr; gap:64px; align-items:center; padding:56px 0; border-bottom:1px solid var(--panel-line);}
+  .feature-row:last-child{border-bottom:none;}
+  .feature-row.rev{grid-template-columns:1.4fr 1.1fr;}
+  .feature-row.rev .feature-visual{order:2;}
+  .feature-num{font-family:'Space Grotesk',sans-serif; font-size:.85rem; color:var(--ink-faint); margin-bottom:14px;}
+  .feature-copy h3{font-size:1.7rem; font-weight:600; margin-bottom:14px; letter-spacing:-0.01em;}
+  .feature-copy p{color:var(--ink-dim); line-height:1.65; margin-bottom:20px;}
+  .feature-copy .chip-row{display:flex; gap:8px; flex-wrap:wrap;}
+  .chip{font-size:.76rem; padding:5px 12px; border-radius:99px; border:1px solid var(--panel-line); color:var(--ink-dim);}
+  .feature-visual{border-radius:var(--radius-lg); padding:28px; min-height:220px; position:relative; overflow:hidden;}
+  .fv-bars{display:flex; align-items:flex-end; gap:10px; height:150px;}
+  .fv-bars i{flex:1; border-radius:6px 6px 0 0; background:linear-gradient(180deg, var(--aqua), transparent);}
+  .fv-gauge{display:flex; align-items:center; justify-content:center; height:180px;}
+  .fv-chat .bubble{max-width:80%; padding:12px 16px; border-radius:14px; font-size:.85rem; margin-bottom:10px; line-height:1.5;}
+  .fv-chat .bubble.bot{background:rgba(255,255,255,0.05); border:1px solid var(--panel-line);}
+  .fv-chat .bubble.user{background:var(--violet-dim); margin-left:auto; color:var(--ink);}
+  .fv-path{display:flex; align-items:center; gap:0; height:100%;}
+  .fv-path .node{width:14px; height:14px; border-radius:50%; background:var(--panel); border:2px solid var(--aqua); flex-shrink:0;}
+  .fv-path .node.done{background:var(--aqua);}
+  .fv-path .seg{flex:1; height:2px; background:var(--panel-line);}
+  .fv-kanban{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; height:100%;}
+  .fv-kanban .col{background:rgba(255,255,255,0.03); border-radius:10px; padding:10px;}
+  .fv-kanban .col .lbl{font-size:.68rem; color:var(--ink-faint); margin-bottom:8px;}
+  .fv-kanban .card{background:var(--panel); border-radius:8px; padding:8px 10px; font-size:.72rem; margin-bottom:6px; border-left:3px solid var(--violet);}
+
+  .cta-band{margin:0 6vw 120px; padding:70px 6vw; border-radius:32px; text-align:center; position:relative; overflow:hidden;
+    background:radial-gradient(circle at 30% 20%, rgba(155,123,255,0.18), transparent 55%), radial-gradient(circle at 80% 80%, rgba(79,232,208,0.16), transparent 55%), var(--panel);
+    border:1px solid var(--panel-line);
+  }
+  .cta-band h2{font-size:clamp(1.8rem,4vw,2.6rem); margin-bottom:18px; letter-spacing:-0.01em;}
+  .cta-band p{color:var(--ink-dim); margin-bottom:32px;}
+
+  footer.site-footer{padding:50px 6vw; border-top:1px solid var(--panel-line); display:flex; justify-content:space-between; align-items:center; color:var(--ink-faint); font-size:.85rem; flex-wrap:wrap; gap:16px;}
+
+  /* ========== AUTH ========== */
+  #page-auth{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:120px 6vw 60px; position:relative;}
+  .auth-card{width:100%; max-width:420px; border-radius:var(--radius-lg); padding:40px; position:relative;}
+  .auth-tabs{display:flex; gap:6px; background:rgba(255,255,255,0.04); border-radius:99px; padding:4px; margin-bottom:30px;}
+  .auth-tab{flex:1; text-align:center; padding:10px; border:none; background:transparent; border-radius:99px; color:var(--ink-dim); font-weight:600; font-size:.86rem; transition:all .25s;}
+  .auth-tab.active{background:linear-gradient(120deg, var(--aqua), var(--violet)); color:#06070c;}
+  .field{margin-bottom:18px;}
+  .field label{display:block; font-size:.78rem; color:var(--ink-dim); margin-bottom:8px;}
+  .field input, .field select, .field textarea{
+    width:100%; background:rgba(255,255,255,0.04); border:1px solid var(--panel-line); border-radius:var(--radius-sm);
+    padding:12px 14px; color:var(--ink); font-size:.92rem; font-family:inherit; transition:border-color .2s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{border-color:var(--aqua);}
+  .auth-note{text-align:center; font-size:.78rem; color:var(--ink-faint); margin-top:20px;}
+  .form-err{font-size:.78rem; color:var(--rose); margin-top:8px; min-height:16px;}
+
+  /* ========== APP SHELL ========== */
+  #appShell{display:none; min-height:100vh;}
+  #appShell.active{display:flex;}
+  .rail{
+    width:80px; flex-shrink:0; display:flex; flex-direction:column; align-items:center; padding:24px 0;
+    border-right:1px solid var(--panel-line); background:var(--void-2); position:sticky; top:0; height:100vh; z-index:30;
+  }
+  .rail .brand-mark{margin-bottom:34px;}
+  .rail-btn{
+    width:48px; height:48px; border-radius:14px; border:none; background:transparent; color:var(--ink-faint);
+    display:flex; align-items:center; justify-content:center; margin-bottom:8px; transition:all .2s; position:relative;
+  }
+  .rail-btn svg{width:20px; height:20px;}
+  .rail-btn:hover{color:var(--ink); background:rgba(255,255,255,0.05);}
+  .rail-btn.active{color:#06070c; background:linear-gradient(135deg, var(--aqua), var(--violet));}
+  .rail-btn .tip{
+    position:absolute; left:64px; background:#181b28; border:1px solid var(--panel-line); padding:6px 12px; border-radius:8px;
+    font-size:.76rem; white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .15s; z-index:50;
+  }
+  .rail-btn:hover .tip{opacity:1;}
+  .rail-bottom{margin-top:auto; display:flex; flex-direction:column; align-items:center;}
+
+  .app-main{flex:1; min-width:0; display:flex; flex-direction:column; max-height:100vh; overflow-y:auto;}
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between; padding:22px 40px;
+    border-bottom:1px solid var(--panel-line); position:sticky; top:0; background:rgba(6,7,12,0.85); backdrop-filter:blur(12px); z-index:20;
+  }
+  .topbar h1{font-size:1.3rem; font-weight:600;}
+  .topbar .sub{font-size:.82rem; color:var(--ink-dim); margin-top:2px;}
+  .user-chip{display:flex; align-items:center; gap:10px; font-size:.84rem;}
+  .avatar{width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg, var(--violet), var(--aqua)); display:flex; align-items:center; justify-content:center; font-weight:700; color:#06070c; font-size:.85rem;}
+  .app-page{display:none; padding:36px 40px 80px;}
+  .app-page.active{display:block; animation:pageIn .4s ease both;}
+
+  /* bento dashboard */
+  .bento{display:grid; grid-template-columns:repeat(4, 1fr); grid-auto-rows:130px; gap:18px; margin-bottom:36px;}
+  .tile{border-radius:var(--radius-md); padding:22px; display:flex; flex-direction:column; justify-content:space-between; position:relative; overflow:hidden;}
+  .tile.big{grid-column:span 2; grid-row:span 2;}
+  .tile .t-label{font-size:.78rem; color:var(--ink-dim); display:flex; align-items:center; justify-content:space-between;}
+  .tile .t-value{font-family:'Space Grotesk',sans-serif; font-size:2.1rem; font-weight:600;}
+  .tile.big .t-value{font-size:3.2rem;}
+  .tile .t-foot{font-size:.76rem; color:var(--ink-faint);}
+  .ring-wrap{position:absolute; right:18px; top:18px; width:64px; height:64px;}
+  .quick-actions{display:flex; gap:12px; flex-wrap:wrap; margin-bottom:40px;}
+  .qa-btn{display:flex; align-items:center; gap:10px; padding:12px 18px; border-radius:var(--radius-sm); font-size:.85rem;}
+  .qa-btn svg{width:16px; height:16px;}
+
+  .panel{border-radius:var(--radius-md); padding:28px; margin-bottom:24px;}
+  .panel h3{font-size:1.1rem; font-weight:600; margin-bottom:6px;}
+  .panel .panel-sub{color:var(--ink-dim); font-size:.85rem; margin-bottom:22px;}
+  .two-col{display:grid; grid-template-columns:1fr 1fr; gap:24px;}
+  @media (max-width:900px){.two-col{grid-template-columns:1fr;} .bento{grid-template-columns:repeat(2,1fr);} .tile.big{grid-column:span 2;}}
+
+  /* resume analyzer */
+  .upload-zone{border:1.5px dashed var(--panel-line); border-radius:var(--radius-md); padding:44px 20px; text-align:center; transition:border-color .2s, background .2s; cursor:pointer;}
+  .upload-zone:hover{border-color:var(--aqua); background:rgba(79,232,208,0.03);}
+  .upload-zone svg{width:34px; height:34px; color:var(--aqua); margin-bottom:14px;}
+  .upload-zone .u-title{font-weight:600; margin-bottom:6px;}
+  .upload-zone .u-sub{font-size:.82rem; color:var(--ink-faint);}
+  .progress-bar{height:6px; border-radius:99px; background:rgba(255,255,255,0.06); overflow:hidden; margin:16px 0;}
+  .progress-fill{height:100%; border-radius:99px; background:linear-gradient(90deg, var(--aqua), var(--violet)); width:0%; transition:width .3s ease;}
+  .extract-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:20px;}
+  .extract-item{background:rgba(255,255,255,0.03); border-radius:var(--radius-sm); padding:14px 16px;}
+  .extract-item .k{font-size:.72rem; color:var(--ink-faint); margin-bottom:6px;}
+  .extract-item .v{font-size:.92rem; font-weight:500;}
+  .skill-tags{display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;}
+  .tag{font-size:.78rem; padding:6px 12px; border-radius:99px; background:var(--aqua-dim); color:var(--aqua); border:1px solid rgba(79,232,208,0.25);}
+  .tag.rm{background:var(--violet-dim); color:var(--violet); border-color:rgba(155,123,255,0.25);}
+
+  /* ats */
+  .gauge{position:relative; width:170px; height:170px; margin:0 auto;}
+  .gauge svg{transform:rotate(-90deg);}
+  .gauge-track{fill:none; stroke:rgba(255,255,255,0.06); stroke-width:12;}
+  .gauge-fill{fill:none; stroke-width:12; stroke-linecap:round; transition:stroke-dashoffset 1s cubic-bezier(.2,.8,.2,1);}
+  .gauge-label{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;}
+  .gauge-label .num{font-family:'Space Grotesk',sans-serif; font-size:2.3rem; font-weight:700;}
+  .gauge-label .lbl{font-size:.7rem; color:var(--ink-faint);}
+  .kw-col h4{font-size:.85rem; margin-bottom:12px; display:flex; align-items:center; gap:8px;}
+  .kw-list{display:flex; flex-wrap:wrap; gap:8px; min-height:32px;}
+
+  /* interview */
+  .qcount{font-family:'Space Grotesk',sans-serif; color:var(--ink-faint); font-size:.85rem; margin-bottom:10px;}
+  .q-text{font-size:1.15rem; font-weight:600; line-height:1.5; margin-bottom:20px;}
+  .feedback-box{margin-top:18px; padding:18px; border-radius:var(--radius-sm); background:rgba(255,255,255,0.03); border-left:3px solid var(--aqua);}
+  .feedback-box .fscore{font-family:'Space Grotesk',sans-serif; font-weight:700; color:var(--aqua); margin-bottom:6px;}
+  .interview-hist{display:flex; flex-direction:column; gap:10px; margin-top:10px;}
+  .hist-row{display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:rgba(255,255,255,0.03); border-radius:var(--radius-sm); font-size:.85rem;}
+
+  /* skill gap */
+  .bar-row{display:grid; grid-template-columns:140px 1fr 50px; align-items:center; gap:14px; margin-bottom:16px; font-size:.85rem;}
+  .bar-track{height:10px; border-radius:99px; background:rgba(255,255,255,0.06); overflow:hidden; position:relative;}
+  .bar-fill{height:100%; border-radius:99px; transition:width .8s cubic-bezier(.2,.8,.2,1);}
+
+  /* roadmap */
+  .roadmap-track{display:flex; overflow-x:auto; gap:0; padding:20px 0 30px; scroll-snap-type:x proximity;}
+  .rm-stage{min-width:230px; scroll-snap-align:start; padding-right:36px; position:relative;}
+  .rm-stage:not(:last-child)::after{content:''; position:absolute; top:22px; right:0; width:36px; height:2px; background:var(--panel-line);}
+  .rm-stage.complete:not(:last-child)::after{background:var(--aqua);}
+  .rm-num{width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Space Grotesk',sans-serif; font-weight:700; border:2px solid var(--panel-line); margin-bottom:16px; color:var(--ink-dim); transition:all .3s;}
+  .rm-stage.complete .rm-num{background:var(--aqua); border-color:var(--aqua); color:#06070c;}
+  .rm-stage.current .rm-num{border-color:var(--violet); color:var(--violet);}
+  .rm-card{background:rgba(255,255,255,0.03); border:1px solid var(--panel-line); border-radius:var(--radius-md); padding:18px; min-height:170px; display:flex; flex-direction:column;}
+  .rm-card h4{font-size:.98rem; margin-bottom:8px;}
+  .rm-card p{font-size:.8rem; color:var(--ink-dim); line-height:1.5; flex:1;}
+  .rm-progress-wrap{display:flex; align-items:center; gap:16px; margin-bottom:8px;}
+
+  /* jobs kanban */
+  .kanban{display:grid; grid-template-columns:repeat(5,1fr); gap:16px; overflow-x:auto;}
+  .kcol{min-width:210px;}
+  .kcol-head{display:flex; justify-content:space-between; align-items:center; font-size:.8rem; color:var(--ink-dim); margin-bottom:14px; padding:0 4px;}
+  .kcol-head .count{background:rgba(255,255,255,0.06); padding:1px 8px; border-radius:99px; font-size:.72rem;}
+  .kcard{background:rgba(255,255,255,0.035); border:1px solid var(--panel-line); border-left:3px solid var(--violet); border-radius:10px; padding:14px; margin-bottom:12px;}
+  .kcard .role{font-weight:600; font-size:.88rem; margin-bottom:2px;}
+  .kcard .co{font-size:.78rem; color:var(--ink-dim); margin-bottom:10px;}
+  .kcard .date{font-size:.7rem; color:var(--ink-faint); margin-bottom:10px;}
+  .kcard-actions{display:flex; gap:6px;}
+  .kcard-actions button{flex:1; font-size:.7rem; padding:7px 4px; border-radius:7px; border:1px solid var(--panel-line); background:transparent; color:var(--ink-dim);}
+  .kcard-actions button:hover{border-color:var(--aqua); color:var(--aqua);}
+  .kcard-actions button.del:hover{border-color:var(--rose); color:var(--rose);}
+  .empty-col{font-size:.74rem; color:var(--ink-faint); text-align:center; padding:20px 8px; border:1px dashed var(--panel-line); border-radius:10px;}
+
+  /* modal */
+  .modal-overlay{position:fixed; inset:0; background:rgba(4,5,9,0.72); backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center; z-index:100;}
+  .modal-overlay.active{display:flex;}
+  .modal{width:100%; max-width:420px; border-radius:var(--radius-lg); padding:30px; background:var(--void-2); border:1px solid var(--panel-line);}
+  .modal h3{margin-bottom:20px;}
+  .modal-actions{display:flex; gap:10px; margin-top:24px;}
+
+  /* chatbot */
+  #chatToggle{
+    position:fixed; bottom:26px; right:26px; width:58px; height:58px; border-radius:50%; border:none;
+    background:linear-gradient(135deg, var(--aqua), var(--violet)); color:#06070c; display:flex; align-items:center; justify-content:center;
+    z-index:60; box-shadow:0 14px 30px -8px rgba(155,123,255,0.5); transition:transform .2s;
+  }
+  #chatToggle:hover{transform:scale(1.08);}
+  #chatToggle svg{width:24px; height:24px;}
+  #chatPanel{
+    position:fixed; bottom:96px; right:26px; width:360px; max-width:90vw; height:480px; max-height:70vh;
+    border-radius:var(--radius-lg); background:var(--void-2); border:1px solid var(--panel-line); display:none; flex-direction:column; z-index:60; overflow:hidden;
+    box-shadow:0 24px 60px -12px rgba(0,0,0,0.6);
+  }
+  #chatPanel.active{display:flex; animation:pageIn .3s ease both;}
+  .chat-head{padding:16px 18px; border-bottom:1px solid var(--panel-line); display:flex; align-items:center; gap:10px;}
+  .chat-head .cdot{width:8px; height:8px; border-radius:50%; background:var(--aqua); box-shadow:0 0 8px var(--aqua);}
+  .chat-body{flex:1; overflow-y:auto; padding:16px 18px; display:flex; flex-direction:column; gap:12px;}
+  .cmsg{max-width:82%; padding:10px 14px; border-radius:14px; font-size:.85rem; line-height:1.5;}
+  .cmsg.bot{background:rgba(255,255,255,0.05); align-self:flex-start; border:1px solid var(--panel-line);}
+  .cmsg.user{background:var(--violet-dim); align-self:flex-end;}
+  .chat-input-row{display:flex; gap:8px; padding:14px; border-top:1px solid var(--panel-line);}
+  .chat-input-row input{flex:1; background:rgba(255,255,255,0.04); border:1px solid var(--panel-line); border-radius:99px; padding:10px 16px; color:var(--ink); font-size:.85rem; font-family:inherit;}
+  .chat-send{width:38px; height:38px; border-radius:50%; border:none; background:var(--aqua); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .chat-send svg{width:16px; height:16px; color:#06070c;}
+  .chat-suggest{display:flex; gap:6px; flex-wrap:wrap; padding:0 18px 12px;}
+  .chat-suggest button{font-size:.7rem; padding:6px 10px; border-radius:99px; background:transparent; border:1px solid var(--panel-line); color:var(--ink-dim);}
+  .chat-suggest button:hover{border-color:var(--aqua); color:var(--aqua);}
+
+  .toast-wrap{position:fixed; top:20px; right:20px; z-index:200; display:flex; flex-direction:column; gap:10px;}
+  .toast{background:var(--void-2); border:1px solid var(--panel-line); border-left:3px solid var(--aqua); padding:14px 20px; border-radius:10px; font-size:.85rem; box-shadow:0 10px 30px -10px rgba(0,0,0,.6); animation:toastIn .3s ease both;}
+  @keyframes toastIn{from{opacity:0; transform:translateX(20px);} to{opacity:1; transform:translateX(0);}}
+
+  @media (max-width:820px){
+    .nav-links{display:none;}
+    .feature-row, .feature-row.rev{grid-template-columns:1fr;}
+    .feature-row.rev .feature-visual{order:0;}
+    #appShell{flex-direction:column;}
+    .rail{width:100%; height:auto; flex-direction:row; position:sticky; top:0; padding:12px; overflow-x:auto; border-right:none; border-bottom:1px solid var(--panel-line);}
+    .rail .brand-mark{margin-bottom:0; margin-right:10px;}
+    .rail-bottom{margin-top:0; margin-left:auto; flex-direction:row;}
+    .rail-btn .tip{display:none;}
+    .app-main{max-height:none;}
+    .topbar{padding:16px 20px;}
+    .app-page{padding:22px 18px 60px;}
+    .kanban{grid-template-columns:repeat(5, 210px);}
+  }
+</style>
+</head>
+<body>
+<div class="grain"></div>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- ============ MARKETING NAV ============ -->
+<nav id="marketingNav">
+  <div class="brand"><span class="brand-mark">C</span> CareerSync AI</div>
+  <div class="nav-links">
+    <a href="#features" data-scroll="features">Features</a>
+    <a href="#how" data-scroll="how">How it works</a>
+    <a href="#" data-nav="auth" data-mode="login">Log in</a>
+  </div>
+  <div class="nav-cta">
+    <span class="live-chip"><span class="live-dot"></span> <span id="liveClock">--:--:--</span></span>
+    <button class="btn btn-primary btn-sm" data-nav="auth" data-mode="register">Get started</button>
+  </div>
+</nav>
+
+<!-- ============ LANDING ============ -->
+<section class="page active" id="page-landing">
+  <div class="hero">
+    <canvas id="particleCanvas"></canvas>
+    <div class="hero-content">
+      <div class="hero-eyebrow">for students who refuse to blend in</div>
+      <h1 id="kineticHeadline">
+        <span class="kinetic-word">Your</span> <span class="kinetic-word">career,</span>
+        <span class="kinetic-word hero-grad">engineered</span> <span class="kinetic-word">not</span>
+        <span class="kinetic-word">guessed.</span>
+      </h1>
+      <p class="lead">CareerSync AI reads your resume, scores it against real job descriptions, drills you with AI mock interviews, and turns every gap into a roadmap — one connected system, not four disconnected tools.</p>
+      <div class="hero-actions">
+        <button class="btn btn-primary" data-nav="auth" data-mode="register">Get started free</button>
+        <button class="btn btn-ghost" data-scroll="how">See how it flows</button>
+      </div>
+    </div>
+    <div class="hero-scroll"><span>scroll</span><span class="scroll-line"></span></div>
+  </div>
+
+  <div class="marquee-strip">
+    <div class="marquee-track" id="marqueeTrack"></div>
+  </div>
+
+  <div class="section" id="features">
+    <div class="section-head">
+      <div class="section-tag">the system</div>
+      <h2>Ten tools, one continuous flow.</h2>
+      <p>Every module feeds the next — your resume becomes your ATS score, your ATS score exposes your skill gaps, your skill gaps build your roadmap, and your roadmap prepares you for the interview that gets you hired.</p>
+    </div>
+
+    <div class="feature-row">
+      <div class="feature-copy">
+        <div class="feature-num">01 / 02</div>
+        <h3>Resume Analyzer &amp; profile</h3>
+        <p>Upload once. CareerSync AI extracts your education, experience, projects, certifications and skills into a single living profile that powers everything downstream.</p>
+        <div class="chip-row"><span class="chip">PDF &amp; DOCX</span><span class="chip">Auto-tagging</span><span class="chip">One profile</span></div>
+      </div>
+      <div class="feature-visual glass">
+        <div class="extract-grid">
+          <div class="extract-item"><div class="k">Name</div><div class="v">Detected candidate</div></div>
+          <div class="extract-item"><div class="k">Experience</div><div class="v">2 internships</div></div>
+        </div>
+        <div class="skill-tags" style="margin-top:16px;"><span class="tag">React</span><span class="tag">Node.js</span><span class="tag">SQL</span><span class="tag rm">+6 more</span></div>
+      </div>
+    </div>
+
+    <div class="feature-row rev">
+      <div class="feature-copy">
+        <div class="feature-num">03</div>
+        <h3>ATS Checker</h3>
+        <p>Paste any job description and get a real compatibility score — matched keywords, missing skills, and formatting flags, in seconds.</p>
+        <div class="chip-row"><span class="chip">Keyword match</span><span class="chip">Score out of 100</span><span class="chip">Formatting checks</span></div>
+      </div>
+      <div class="feature-visual glass fv-gauge">
+        <div class="gauge">
+          <svg width="170" height="170" viewBox="0 0 170 170"><circle class="gauge-track" cx="85" cy="85" r="72"/><circle class="gauge-fill" cx="85" cy="85" r="72" stroke="url(#demoGrad)" stroke-dasharray="452" stroke-dashoffset="140"/><defs><linearGradient id="demoGrad"><stop offset="0%" stop-color="#4fe8d0"/><stop offset="100%" stop-color="#9b7bff"/></linearGradient></defs></svg>
+          <div class="gauge-label"><div class="num">78</div><div class="lbl">ATS score</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-row">
+      <div class="feature-copy">
+        <div class="feature-num">04</div>
+        <h3>AI Interview</h3>
+        <p>Role-specific questions, evaluated instantly for relevance, completeness and clarity — with a full history you can track improvement against.</p>
+        <div class="chip-row"><span class="chip">Role-aware</span><span class="chip">Instant feedback</span><span class="chip">History log</span></div>
+      </div>
+      <div class="feature-visual glass fv-chat">
+        <div class="bubble bot">Tell me about a project where you debugged a tough production issue.</div>
+        <div class="bubble user">I traced a memory leak in our React app using the profiler...</div>
+        <div class="bubble bot">Clarity: strong. Add a measurable outcome next time.</div>
+      </div>
+    </div>
+
+    <div class="feature-row rev">
+      <div class="feature-copy">
+        <div class="feature-num">05 / 06</div>
+        <h3>Skill Gap &amp; Career Roadmap</h3>
+        <p>See exactly which skills stand between you and your target role, then follow an ordered, milestone-based plan to close them.</p>
+        <div class="chip-row"><span class="chip">Skill comparison</span><span class="chip">Ordered milestones</span><span class="chip">Progress tracking</span></div>
+      </div>
+      <div class="feature-visual glass">
+        <div class="fv-bars">
+          <i style="height:40%;"></i><i style="height:75%;"></i><i style="height:55%;"></i><i style="height:90%;"></i><i style="height:30%;"></i><i style="height:65%;"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-row">
+      <div class="feature-copy">
+        <div class="feature-num">07</div>
+        <h3>Job Tracker</h3>
+        <p>A Kanban board from Applied through Screening, Interview, and Selected or Rejected — every application, one board.</p>
+        <div class="chip-row"><span class="chip">Kanban flow</span><span class="chip">Status history</span><span class="chip">Feedback log</span></div>
+      </div>
+      <div class="feature-visual glass fv-kanban">
+        <div class="col"><div class="lbl">Applied</div><div class="card">Frontend Intern</div><div class="card">SDE-1</div></div>
+        <div class="col"><div class="lbl">Interview</div><div class="card">UX Engineer</div></div>
+        <div class="col"><div class="lbl">Selected</div><div class="card">Backend Intern</div></div>
+      </div>
+    </div>
+
+    <div class="feature-row rev">
+      <div class="feature-copy">
+        <div class="feature-num">08 / 09 / 10</div>
+        <h3>Chatbot &amp; Dashboard</h3>
+        <p>One dashboard shows resume readiness, skill progress and upcoming interviews at a glance; the chatbot answers "what should I do next?" using your actual data.</p>
+        <div class="chip-row"><span class="chip">Live dashboard</span><span class="chip">Context-aware chat</span><span class="chip">Recommendations</span></div>
+      </div>
+      <div class="feature-visual glass fv-path">
+        <div class="node done"></div><div class="seg" style="background:var(--aqua);"></div>
+        <div class="node done"></div><div class="seg" style="background:var(--aqua);"></div>
+        <div class="node"></div><div class="seg"></div>
+        <div class="node"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="how">
+    <div class="cta-band">
+      <h2>Zero setup. Zero disconnected tools.</h2>
+      <p>Create a profile in under a minute and watch your resume turn into a roadmap.</p>
+      <button class="btn btn-primary" data-nav="auth" data-mode="register">Build my profile</button>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="brand"><span class="brand-mark" style="width:24px;height:24px;font-size:.7rem;">C</span> CareerSync AI</div>
+    <div>Built for students, by students · Panimalar Engineering College</div>
+  </footer>
+</section>
+
+<!-- ============ AUTH ============ -->
+<section class="page" id="page-auth">
+  <div class="auth-card glass">
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-authtab="login">Log in</button>
+      <button class="auth-tab" data-authtab="register">Register</button>
+    </div>
+    <form id="authForm">
+      <div class="field" id="fieldName">
+        <label for="regName">Full name</label>
+        <input type="text" id="regName" placeholder="e.g. Pranesh K" autocomplete="name">
+      </div>
+      <div class="field">
+        <label for="authEmail">Email</label>
+        <input type="email" id="authEmail" placeholder="you@example.com" autocomplete="email" required>
+      </div>
+      <div class="field">
+        <label for="authPass">Password</label>
+        <input type="password" id="authPass" placeholder="••••••••" autocomplete="current-password" required minlength="4">
+      </div>
+      <div class="field" id="fieldRole">
+        <label for="regRole">Target role</label>
+        <select id="regRole">
+          <option>Frontend Developer</option>
+          <option>Backend Developer</option>
+          <option>Full Stack Developer</option>
+          <option>Data Analyst</option>
+        </select>
+      </div>
+      <div class="form-err" id="authErr"></div>
+      <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;" id="authSubmitBtn">Enter dashboard</button>
+    </form>
+    <div class="auth-note">Demo product — any email &amp; password works. Your progress is saved on this device.</div>
+  </div>
+</section>
+
+<!-- ============ APP SHELL ============ -->
+<div id="appShell">
+  <nav class="rail">
+    <span class="brand-mark">C</span>
+    <button class="rail-btn active" data-apppage="dashboard"><span class="tip">Dashboard</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+    </button>
+    <button class="rail-btn" data-apppage="resume"><span class="tip">Resume Analyzer</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
+    </button>
+    <button class="rail-btn" data-apppage="ats"><span class="tip">ATS Checker</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.4 2.4 4.6-5"/></svg>
+    </button>
+    <button class="rail-btn" data-apppage="interview"><span class="tip">AI Interview</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+    </button>
+    <button class="rail-btn" data-apppage="skillgap"><span class="tip">Skill Gap</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="20" x2="6" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="14"/></svg>
+    </button>
+    <button class="rail-btn" data-apppage="roadmap"><span class="tip">Career Roadmap</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="M9 6h6a3 3 0 0 1 3 3v0a3 3 0 0 1-3 3H9a3 3 0 0 0-3 3v0a3 3 0 0 0 3 3"/></svg>
+    </button>
+    <button class="rail-btn" data-apppage="jobs"><span class="tip">Job Tracker</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+    </button>
+    <div class="rail-bottom">
+      <button class="rail-btn" id="logoutBtn"><span class="tip">Log out</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <main class="app-main">
+    <div class="topbar">
+      <div><h1 id="topbarTitle">Dashboard</h1><div class="sub" id="topbarSub">Your career, at a glance</div></div>
+      <div class="user-chip"><div class="avatar" id="userAvatar">P</div><div><div id="userName" style="font-weight:600;">Candidate</div><div style="color:var(--ink-faint); font-size:.74rem;" id="userRole">Frontend Developer</div></div></div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="app-page active" id="page-dashboard">
+      <div class="bento">
+        <div class="tile big glass">
+          <div class="t-label">ATS score<span id="ringIcon"></span></div>
+          <div class="t-value" id="dashAts">—</div>
+          <div class="t-foot">Run the ATS Checker to generate one</div>
+        </div>
+        <div class="tile glass"><div class="t-label">Resume status</div><div class="t-value" id="dashResume" style="font-size:1.3rem;">Not uploaded</div><div class="t-foot">Profile completeness</div></div>
+        <div class="tile glass"><div class="t-label">Skill readiness</div><div class="t-value" id="dashSkill">0%</div><div class="t-foot">vs target role</div></div>
+        <div class="tile glass"><div class="t-label">Roadmap progress</div><div class="t-value" id="dashRoadmap">0%</div><div class="t-foot" id="dashRoadmapFoot">0 of 7 stages</div></div>
+        <div class="tile glass"><div class="t-label">Applications</div><div class="t-value" id="dashJobs">0</div><div class="t-foot" id="dashJobsFoot">tracked this cycle</div></div>
+      </div>
+      <div class="quick-actions">
+        <button class="btn btn-ghost qa-btn" data-apppage="resume">Analyze resume</button>
+        <button class="btn btn-ghost qa-btn" data-apppage="ats">Run ATS check</button>
+        <button class="btn btn-ghost qa-btn" data-apppage="interview">Start mock interview</button>
+        <button class="btn btn-ghost qa-btn" data-apppage="jobs">Log an application</button>
+      </div>
+      <div class="two-col">
+        <div class="panel glass">
+          <h3>Recommended next step</h3>
+          <div class="panel-sub" id="dashRecommendation">Upload your resume to unlock the rest of the system.</div>
+        </div>
+        <div class="panel glass">
+          <h3>Recent interview attempts</h3>
+          <div class="panel-sub">Your last few AI interview sessions</div>
+          <div class="interview-hist" id="dashInterviewHist"><div class="empty-col">No attempts yet</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESUME ANALYZER -->
+    <div class="app-page" id="page-resume">
+      <div class="panel glass">
+        <h3>Resume Analyzer</h3>
+        <div class="panel-sub">Upload a resume (PDF/DOCX) and CareerSync AI extracts your profile automatically.</div>
+        <div class="upload-zone" id="uploadZone">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <div class="u-title">Click to upload your resume</div>
+          <div class="u-sub" id="uploadSub">PDF or DOCX · demo parses any file you choose</div>
+          <input type="file" id="resumeFile" accept=".pdf,.doc,.docx" style="display:none;">
+        </div>
+        <div class="progress-bar" id="uploadProgressWrap" style="display:none;"><div class="progress-fill" id="uploadProgress"></div></div>
+      </div>
+      <div class="panel glass" id="extractedPanel" style="display:none;">
+        <h3>Extracted profile</h3>
+        <div class="panel-sub">Edit anything that looks off — this feeds your ATS score and skill gap.</div>
+        <div class="extract-grid">
+          <div class="extract-item"><div class="k">File</div><div class="v" id="exFile">—</div></div>
+          <div class="extract-item"><div class="k">Experience</div><div class="v" id="exExp">2 internships detected</div></div>
+          <div class="extract-item"><div class="k">Education</div><div class="v" id="exEdu">B.Tech, Information Technology</div></div>
+          <div class="extract-item"><div class="k">Projects</div><div class="v" id="exProj">3 projects detected</div></div>
+        </div>
+        <div style="margin-top:20px;">
+          <div class="k" style="font-size:.72rem; color:var(--ink-faint); margin-bottom:10px;">Detected skills — click to remove, or add your own</div>
+          <div class="skill-tags" id="skillTagList"></div>
+          <div style="display:flex; gap:8px; margin-top:14px;">
+            <input type="text" id="addSkillInput" placeholder="Add a skill and press Enter" style="flex:1; background:rgba(255,255,255,0.04); border:1px solid var(--panel-line); border-radius:99px; padding:9px 16px; color:var(--ink); font-size:.82rem;">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ATS -->
+    <div class="app-page" id="page-ats">
+      <div class="two-col">
+        <div class="panel glass">
+          <h3>Run an ATS check</h3>
+          <div class="panel-sub">Paste a job description below. We match it against your detected skills.</div>
+          <div class="field"><label for="atsRoleSelect">Target role</label>
+            <select id="atsRoleSelect">
+              <option>Frontend Developer</option><option>Backend Developer</option><option>Full Stack Developer</option><option>Data Analyst</option>
+            </select>
+          </div>
+          <div class="field"><label for="jdText">Job description</label>
+            <textarea id="jdText" rows="7" placeholder="Paste a job description here (or leave blank to use a sample)."></textarea>
+          </div>
+          <button class="btn btn-primary" id="runAtsBtn" style="width:100%; justify-content:center;">Run ATS check</button>
+        </div>
+        <div class="panel glass">
+          <h3>Result</h3>
+          <div class="panel-sub">Score, matched keywords and gaps</div>
+          <div class="gauge">
+            <svg width="170" height="170" viewBox="0 0 170 170"><circle class="gauge-track" cx="85" cy="85" r="72"/><circle class="gauge-fill" id="atsGaugeFill" cx="85" cy="85" r="72" stroke="url(#atsGrad)" stroke-dasharray="452" stroke-dashoffset="452"/><defs><linearGradient id="atsGrad"><stop offset="0%" stop-color="#4fe8d0"/><stop offset="100%" stop-color="#9b7bff"/></linearGradient></defs></svg>
+            <div class="gauge-label"><div class="num" id="atsScoreNum">—</div><div class="lbl">ATS score</div></div>
+          </div>
+          <div class="two-col" style="margin-top:22px; gap:18px;">
+            <div class="kw-col"><h4 style="color:var(--aqua);">Matched</h4><div class="kw-list" id="matchedKw"><span class="empty-col" style="border:none; padding:0;">Run a check first</span></div></div>
+            <div class="kw-col"><h4 style="color:var(--rose);">Missing</h4><div class="kw-list" id="missingKw"></div></div>
+          </div>
+          <div id="formatIssues" style="margin-top:18px; font-size:.8rem; color:var(--ink-dim);"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INTERVIEW -->
+    <div class="app-page" id="page-interview">
+      <div class="two-col">
+        <div class="panel glass" id="interviewSetup">
+          <h3>AI Interview</h3>
+          <div class="panel-sub">Pick a role. We'll generate five questions and score each answer.</div>
+          <div class="field"><label for="interviewRoleSelect">Role</label>
+            <select id="interviewRoleSelect">
+              <option>Frontend Developer</option><option>Backend Developer</option><option>Full Stack Developer</option><option>Data Analyst</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" id="startInterviewBtn" style="width:100%; justify-content:center;">Generate questions</button>
+          <h3 style="margin-top:30px;">History</h3>
+          <div class="interview-hist" id="interviewHistFull"><div class="empty-col">No attempts yet</div></div>
+        </div>
+        <div class="panel glass" id="interviewLive" style="display:none;">
+          <div class="qcount" id="qCounter">Question 1 of 5</div>
+          <div class="q-text" id="qText"></div>
+          <div class="field"><textarea id="answerText" rows="5" placeholder="Type your answer..."></textarea></div>
+          <button class="btn btn-primary" id="submitAnswerBtn">Submit answer</button>
+          <div class="feedback-box" id="feedbackBox" style="display:none;">
+            <div class="fscore" id="fScore"></div>
+            <div id="fText"></div>
+          </div>
+          <button class="btn btn-ghost" id="nextQBtn" style="display:none; margin-top:14px;">Next question →</button>
+        </div>
+        <div class="panel glass" id="interviewSummary" style="display:none;">
+          <h3>Session complete</h3>
+          <div class="panel-sub">Average score across 5 questions</div>
+          <div class="gauge"><div class="gauge-label" style="position:static;"><div class="num" id="summaryScore" style="font-size:2.6rem;">—</div><div class="lbl">out of 10</div></div></div>
+          <button class="btn btn-ghost" id="retakeBtn" style="width:100%; justify-content:center; margin-top:16px;">Start new session</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SKILL GAP -->
+    <div class="app-page" id="page-skillgap">
+      <div class="panel glass">
+        <h3>Skill Gap Analysis</h3>
+        <div class="panel-sub">Your current skills vs. what your target role typically requires.</div>
+        <div class="field" style="max-width:280px;"><label for="skillgapRoleSelect">Target role</label>
+          <select id="skillgapRoleSelect">
+            <option>Frontend Developer</option><option>Backend Developer</option><option>Full Stack Developer</option><option>Data Analyst</option>
+          </select>
+        </div>
+        <div id="skillBars" style="margin-top:20px;"></div>
+      </div>
+      <div class="panel glass">
+        <h3>Missing skills to prioritize</h3>
+        <div class="panel-sub">Feeds directly into your roadmap</div>
+        <div class="skill-tags" id="gapMissingList"></div>
+      </div>
+    </div>
+
+    <!-- ROADMAP -->
+    <div class="app-page" id="page-roadmap">
+      <div class="panel glass">
+        <h3>Career Roadmap</h3>
+        <div class="rm-progress-wrap">
+          <div class="progress-bar" style="flex:1; margin:0;"><div class="progress-fill" id="roadmapProgressBar" style="width:0%;"></div></div>
+          <div class="panel-sub" style="margin:0; white-space:nowrap;" id="roadmapProgressLabel">0 / 7 complete</div>
+        </div>
+        <div class="roadmap-track" id="roadmapTrack"></div>
+      </div>
+    </div>
+
+    <!-- JOBS -->
+    <div class="app-page" id="page-jobs">
+      <div class="panel glass" style="margin-bottom:24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px;">
+        <div><h3 style="margin-bottom:4px;">Job Tracker</h3><div class="panel-sub" style="margin:0;">Applied → Screening → Interview → Selected / Rejected</div></div>
+        <button class="btn btn-primary btn-sm" id="addJobBtn">+ Add application</button>
+      </div>
+      <div class="kanban" id="kanbanBoard"></div>
+    </div>
+  </main>
+</div>
+
+<!-- ADD JOB MODAL -->
+<div class="modal-overlay" id="jobModalOverlay">
+  <div class="modal glass">
+    <h3>Log a new application</h3>
+    <div class="field"><label for="jobCompany">Company</label><input type="text" id="jobCompany" placeholder="e.g. Zoho"></div>
+    <div class="field"><label for="jobRole">Role</label><input type="text" id="jobRole" placeholder="e.g. Frontend Intern"></div>
+    <div class="field"><label for="jobDate">Application date</label><input type="date" id="jobDate"></div>
+    <div class="form-err" id="jobErr"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="jobCancelBtn" style="flex:1; justify-content:center;">Cancel</button>
+      <button class="btn btn-primary" id="jobSaveBtn" style="flex:1; justify-content:center;">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHATBOT -->
+<button id="chatToggle" aria-label="Open career chatbot">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+</button>
+<div id="chatPanel">
+  <div class="chat-head"><span class="cdot"></span> <strong style="font-size:.9rem;">Career Assistant</strong></div>
+  <div class="chat-body" id="chatBody"></div>
+  <div class="chat-suggest">
+    <button data-q="Why is my ATS score low?">ATS score low?</button>
+    <button data-q="What skill should I learn next?">Next skill?</button>
+    <button data-q="Show my current career progress.">My progress</button>
+  </div>
+  <div class="chat-input-row">
+    <input type="text" id="chatInput" placeholder="Ask about your career...">
+    <button class="chat-send" id="chatSendBtn" aria-label="Send"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg></button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------------- STATE ---------------- */
+  var defaultState = {
+    authed:false,
+    profile:{ name:"", email:"", role:"Frontend Developer" },
+    resume:{ uploaded:false, fileName:"", skills:[] },
+    ats:{ score:null, matched:[], missing:[] },
+    interview:{ history:[] },
+    roadmap:{}, // stageIndex(bool complete)
+    jobs:[]
+  };
+  var state;
+  try{
+    var saved = localStorage.getItem('careersync_state_v1');
+    state = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(defaultState));
+  }catch(e){ state = JSON.parse(JSON.stringify(defaultState)); }
+
+  function persist(){
+    try{ localStorage.setItem('careersync_state_v1', JSON.stringify(state)); }catch(e){ /* storage unavailable, continue in-memory */ }
+  }
+
+  function toast(msg){
+    var wrap = document.getElementById('toastWrap');
+    var el = document.createElement('div');
+    el.className='toast'; el.textContent = msg;
+    wrap.appendChild(el);
+    setTimeout(function(){ el.style.opacity='0'; el.style.transition='opacity .4s'; setTimeout(function(){ el.remove(); }, 400); }, 2800);
+  }
+
+  /* ---------------- DATA ---------------- */
+  var ROLE_SKILLS = {
+    "Frontend Developer": ["HTML","CSS","JavaScript","React","TypeScript","Redux","Responsive Design","Git","Webpack","Accessibility"],
+    "Backend Developer": ["Node.js","Express","REST APIs","SQL","MongoDB","Authentication","Docker","Git","System Design","Testing"],
+    "Full Stack Developer": ["HTML","CSS","JavaScript","React","Node.js","Express","SQL","MongoDB","Git","REST APIs"],
+    "Data Analyst": ["Python","SQL","Excel","Power BI","Statistics","Data Visualization","Pandas","Communication","Git","Machine Learning Basics"]
+  };
+  var DEFAULT_SKILLS = ["HTML","CSS","JavaScript","React","Git"];
+  var SAMPLE_JD = {
+    "Frontend Developer":"We're looking for a Frontend Developer skilled in JavaScript, React, HTML and CSS. Experience with TypeScript, Redux and responsive design is a plus. You'll work closely with our team using Git and Webpack.",
+    "Backend Developer":"Seeking a Backend Developer proficient in Node.js, Express and REST APIs. Experience with SQL, MongoDB, Docker and authentication systems required. Familiarity with system design and Git is expected.",
+    "Full Stack Developer":"Full Stack Developer needed with experience in React, Node.js, Express, HTML, CSS, JavaScript, SQL and MongoDB. Git and REST API experience required.",
+    "Data Analyst":"Data Analyst role requiring Python, SQL, Excel and Power BI. Strong statistics and data visualization skills needed. Pandas and communication skills preferred."
+  };
+  var ROADMAP_STAGES = [
+    {title:"HTML Foundations", obj:"Understand semantic structure and accessibility basics.", act:"Build 3 static pages from scratch."},
+    {title:"CSS & Layout", obj:"Master flexbox, grid and responsive design.", act:"Rebuild a landing page pixel-for-pixel."},
+    {title:"JavaScript Core", obj:"DOM, events, async patterns.", act:"Build a small interactive app with no framework."},
+    {title:"React", obj:"Components, state, hooks.", act:"Ship a multi-page React project."},
+    {title:"Node.js", obj:"Server basics, REST APIs.", act:"Build an API backing your React app."},
+    {title:"Full Stack Project", obj:"Connect frontend, backend and a database end to end.", act:"Deploy a complete project publicly."},
+    {title:"Interview Preparation", obj:"Practice explaining your projects and solving problems live.", act:"Run 3 AI mock interview sessions."}
+  ];
+  var QUESTION_BANK = {
+    "Frontend Developer":[
+      {q:"Walk me through how you'd optimize a React app that's re-rendering too often.", k:["memo","usememo","usecallback","re-render","state","key","virtual dom"]},
+      {q:"Explain the difference between flexbox and CSS grid, and when you'd choose each.", k:["flexbox","grid","one-dimensional","two-dimensional","layout","axis"]},
+      {q:"How would you make a web page accessible to screen reader users?", k:["aria","alt text","semantic","contrast","keyboard","screen reader","accessibility"]},
+      {q:"Describe a bug you fixed that was hard to reproduce. How did you approach it?", k:["debug","console","reproduce","root cause","test","logs"]},
+      {q:"How do you decide what state should live locally vs. globally in a React app?", k:["state","context","redux","prop drilling","local","global","lifting state"]}
+    ],
+    "Backend Developer":[
+      {q:"How would you design a REST API for a job application tracker?", k:["rest","endpoint","crud","resource","status code","route"]},
+      {q:"Explain how you'd secure a login system against common attacks.", k:["hash","salt","jwt","https","sql injection","rate limit","token"]},
+      {q:"What's the difference between SQL and NoSQL, and when would you pick each?", k:["sql","nosql","schema","relational","document","scale"]},
+      {q:"How do you approach designing a database schema for a new feature?", k:["schema","normalize","table","relation","foreign key","index"]},
+      {q:"Describe how you'd debug a slow API endpoint in production.", k:["query","index","profile","cache","logs","bottleneck"]}
+    ],
+    "Full Stack Developer":[
+      {q:"How do you keep frontend and backend in sync when an API changes?", k:["contract","versioning","types","schema","api","documentation"]},
+      {q:"Walk through the request lifecycle from a button click to a database write.", k:["request","api","controller","database","response","client"]},
+      {q:"How would you structure a full-stack project so it's easy to scale later?", k:["folder structure","separation","modular","service","architecture"]},
+      {q:"What's your approach to handling errors consistently across frontend and backend?", k:["error handling","try catch","status code","validation","middleware"]},
+      {q:"Tell me about a time you had to learn a new part of the stack quickly.", k:["learn","documentation","project","deadline","ramp up"]}
+    ],
+    "Data Analyst":[
+      {q:"How would you clean a dataset with missing and inconsistent values?", k:["missing","null","clean","outlier","impute","duplicate"]},
+      {q:"Explain a time you used data to influence a decision.", k:["insight","decision","stakeholder","metric","impact","recommendation"]},
+      {q:"What's the difference between correlation and causation, with an example?", k:["correlation","causation","confound","example","variable"]},
+      {q:"How would you choose the right chart to show a trend over time?", k:["line chart","trend","time series","visualization","axis"]},
+      {q:"Walk through how you'd validate a SQL query's results before sharing them.", k:["validate","sql","sanity check","row count","edge case"]}
+    ]
+  };
+
+  /* ---------------- ICON HELPERS ---------------- */
+  function checkIcon(){ return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>'; }
+
+  /* ---------------- NAV: marketing ---------------- */
+  var marketingNav = document.getElementById('marketingNav');
+  window.addEventListener('scroll', function(){
+    marketingNav.classList.toggle('scrolled', window.scrollY > 40);
+  });
+
+  document.querySelectorAll('[data-scroll]').forEach(function(el){
+    el.addEventListener('click', function(ev){
+      ev.preventDefault();
+      var target = document.getElementById(el.getAttribute('data-scroll'));
+      if(target) target.scrollIntoView({behavior: reduceMotion ? 'auto' : 'smooth'});
+    });
+  });
+
+  function showLanding(){
+    document.getElementById('page-landing').classList.add('active');
+    document.getElementById('page-auth').classList.remove('active');
+    document.getElementById('appShell').classList.remove('active');
+    marketingNav.style.display='flex';
+    updateMarketingNavForAuth();
+    window.scrollTo(0,0);
+  }
+  function showAuth(mode){
+    document.getElementById('page-landing').classList.remove('active');
+    document.getElementById('page-auth').classList.add('active');
+    document.getElementById('appShell').classList.remove('active');
+    marketingNav.style.display='flex';
+    setAuthTab(mode || 'login');
+    window.scrollTo(0,0);
+  }
+  function updateMarketingNavForAuth(){
+    var loginLink = document.querySelector('.nav-links [data-mode="login"]');
+    var navCta = document.querySelector('.nav-cta [data-nav="auth"]');
+    var heroCtas = document.querySelectorAll('.hero-actions [data-nav="auth"], .cta-band [data-nav="auth"]');
+    if(state.authed){
+      if(loginLink){ loginLink.textContent = 'Dashboard'; loginLink.setAttribute('data-mode','dashboard'); }
+      if(navCta) navCta.textContent = 'Go to dashboard';
+      heroCtas.forEach(function(b){ b.textContent = 'Go to dashboard'; });
+    } else {
+      if(loginLink){ loginLink.textContent = 'Log in'; loginLink.setAttribute('data-mode','login'); }
+      if(navCta) navCta.textContent = 'Get started';
+      heroCtas.forEach(function(b){ b.textContent = b.closest('.cta-band') ? 'Build my profile' : 'Get started free'; });
+    }
+  }
+  document.querySelectorAll('[data-nav="auth"]').forEach(function(el){
+    el.addEventListener('click', function(){
+      if(state.authed){ enterApp(); return; }
+      showAuth(el.getAttribute('data-mode'));
+    });
+  });
+
+  /* ---------------- AUTH ---------------- */
+  var authTabs = document.querySelectorAll('.auth-tab');
+  function setAuthTab(mode){
+    authTabs.forEach(function(t){ t.classList.toggle('active', t.getAttribute('data-authtab')===mode); });
+    var isRegister = mode==='register';
+    document.getElementById('fieldName').style.display = isRegister ? 'block' : 'none';
+    document.getElementById('fieldRole').style.display = isRegister ? 'block' : 'none';
+    document.getElementById('authSubmitBtn').textContent = isRegister ? 'Create profile' : 'Enter dashboard';
+    document.getElementById('authForm').setAttribute('data-mode', mode);
+  }
+  authTabs.forEach(function(t){ t.addEventListener('click', function(){ setAuthTab(t.getAttribute('data-authtab')); }); });
+
+  document.getElementById('authForm').addEventListener('submit', function(ev){
+    ev.preventDefault();
+    var mode = this.getAttribute('data-mode') || 'login';
+    var email = document.getElementById('authEmail').value.trim();
+    var pass = document.getElementById('authPass').value;
+    var errEl = document.getElementById('authErr');
+    errEl.textContent='';
+    if(!email || !pass){ errEl.textContent='Enter an email and password to continue.'; return; }
+    if(mode==='register'){
+      var name = document.getElementById('regName').value.trim();
+      state.profile.name = name || 'Candidate';
+      state.profile.email = email;
+      state.profile.role = document.getElementById('regRole').value;
+    } else {
+      state.profile.email = email;
+      if(!state.profile.name) state.profile.name = email.split('@')[0];
+      if(!state.profile.role) state.profile.role = 'Frontend Developer';
+    }
+    state.authed = true;
+    persist();
+    if(mode==='register'){
+      showLanding();
+      toast('Profile created — welcome, ' + state.profile.name + '. Head to your dashboard whenever you\'re ready.');
+    } else {
+      enterApp();
+      toast('Welcome back, ' + state.profile.name + '.');
+    }
+  });
+
+  /* ---------------- APP SHELL NAV ---------------- */
+  var appShell = document.getElementById('appShell');
+  var pageTitles = {
+    dashboard:['Dashboard','Your career, at a glance'],
+    resume:['Resume Analyzer','Extract your profile from a resume'],
+    ats:['ATS Checker','Score your resume against a job description'],
+    interview:['AI Interview','Role-specific mock interviews with instant feedback'],
+    skillgap:['Skill Gap Analysis','Current skills vs. target role requirements'],
+    roadmap:['Career Roadmap','Your ordered path to being job-ready'],
+    jobs:['Job Tracker','Every application, one board']
+  };
+
+  function enterApp(){
+    document.getElementById('page-landing').classList.remove('active');
+    document.getElementById('page-auth').classList.remove('active');
+    marketingNav.style.display='none';
+    appShell.classList.add('active');
+    document.getElementById('userName').textContent = state.profile.name || 'Candidate';
+    document.getElementById('userRole').textContent = state.profile.role || 'Frontend Developer';
+    document.getElementById('userAvatar').textContent = (state.profile.name||'C').charAt(0).toUpperCase();
+    ['atsRoleSelect','interviewRoleSelect','skillgapRoleSelect','regRole'].forEach(function(id){
+      var sel = document.getElementById(id);
+      if(sel && state.profile.role) sel.value = state.profile.role;
+    });
+    showAppPage('dashboard');
+    renderResume();
+    renderAts();
+    renderSkillGap();
+    renderRoadmap();
+    renderJobs();
+    renderDashboard();
+    renderInterviewHistory();
+  }
+
+  function showAppPage(id){
+    document.querySelectorAll('.app-page').forEach(function(p){ p.classList.remove('active'); });
+    document.getElementById('page-'+id).classList.add('active');
+    document.querySelectorAll('.rail-btn[data-apppage]').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-apppage')===id); });
+    document.getElementById('topbarTitle').textContent = pageTitles[id][0];
+    document.getElementById('topbarSub').textContent = pageTitles[id][1];
+    document.querySelector('.app-main').scrollTo(0,0);
+    if(id==='dashboard') renderDashboard();
+    if(id==='skillgap') renderSkillGap();
+    if(id==='roadmap') renderRoadmap();
+    if(id==='jobs') renderJobs();
+  }
+  document.querySelectorAll('[data-apppage]').forEach(function(b){
+    b.addEventListener('click', function(){ showAppPage(b.getAttribute('data-apppage')); });
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', function(){
+    state.authed = false;
+    persist();
+    showLanding();
+    toast('Logged out. Your progress is saved on this device.');
+  });
+
+  /* ---------------- DASHBOARD ---------------- */
+  function renderDashboard(){
+    document.getElementById('dashAts').textContent = state.ats.score!==null ? state.ats.score : '—';
+    document.getElementById('dashResume').textContent = state.resume.uploaded ? 'Analyzed' : 'Not uploaded';
+    document.getElementById('dashResume').style.fontSize = state.resume.uploaded ? '1.7rem' : '1.3rem';
+
+    var req = ROLE_SKILLS[state.profile.role] || ROLE_SKILLS['Frontend Developer'];
+    var have = state.resume.skills.length ? state.resume.skills : DEFAULT_SKILLS;
+    var matchCount = req.filter(function(s){ return have.map(lc).indexOf(lc(s))>-1; }).length;
+    var readiness = Math.round((matchCount/req.length)*100);
+    document.getElementById('dashSkill').textContent = readiness + '%';
+
+    var stagesDone = Object.keys(state.roadmap).filter(function(k){ return state.roadmap[k]; }).length;
+    var rmPct = Math.round((stagesDone/ROADMAP_STAGES.length)*100);
+    document.getElementById('dashRoadmap').textContent = rmPct + '%';
+    document.getElementById('dashRoadmapFoot').textContent = stagesDone + ' of ' + ROADMAP_STAGES.length + ' stages';
+
+    document.getElementById('dashJobs').textContent = state.jobs.length;
+    var active = state.jobs.filter(function(j){ return j.stage!=='Selected' && j.stage!=='Rejected'; }).length;
+    document.getElementById('dashJobsFoot').textContent = active + ' active';
+
+    var rec = document.getElementById('dashRecommendation');
+    if(!state.resume.uploaded){ rec.textContent = 'Upload your resume to unlock ATS scoring, skill gap and roadmap.'; }
+    else if(state.ats.score===null){ rec.textContent = 'Run an ATS check against a real job description to see your match score.'; }
+    else if(readiness < 70){ rec.textContent = 'Your skill readiness is ' + readiness + '%. Visit Skill Gap to see exactly what to learn next.'; }
+    else if(!state.interview.history.length){ rec.textContent = 'Skills look solid — start an AI mock interview to prepare for the real thing.'; }
+    else { rec.textContent = 'You\'re in good shape. Keep logging applications in the Job Tracker.'; }
+
+    var histWrap = document.getElementById('dashInterviewHist');
+    if(!state.interview.history.length){ histWrap.innerHTML='<div class="empty-col">No attempts yet</div>'; }
+    else{
+      histWrap.innerHTML = state.interview.history.slice(-3).reverse().map(function(h){
+        return '<div class="hist-row"><span>'+escapeHtml(h.role)+'</span><span style="color:var(--aqua); font-weight:600;">'+h.avg+' / 10</span></div>';
+      }).join('');
+    }
+  }
+
+  /* ---------------- RESUME ANALYZER ---------------- */
+  var uploadZone = document.getElementById('uploadZone');
+  var resumeFile = document.getElementById('resumeFile');
+  uploadZone.addEventListener('click', function(){ resumeFile.click(); });
+  uploadZone.addEventListener('keydown', function(ev){ if(ev.key==='Enter' || ev.key===' '){ resumeFile.click(); } });
+  uploadZone.setAttribute('tabindex','0'); uploadZone.setAttribute('role','button');
+
+  resumeFile.addEventListener('change', function(){
+    if(!this.files || !this.files[0]) return;
+    var f = this.files[0];
+    var wrap = document.getElementById('uploadProgressWrap');
+    var fill = document.getElementById('uploadProgress');
+    wrap.style.display='block'; fill.style.width='0%';
+    var pct = 0;
+    var timer = setInterval(function(){
+      pct += reduceMotion ? 100 : (10 + Math.random()*18);
+      if(pct>=100){ pct=100; clearInterval(timer); finishUpload(f); }
+      fill.style.width = pct + '%';
+    }, reduceMotion ? 10 : 140);
+  });
+
+  function finishUpload(f){
+    state.resume.uploaded = true;
+    state.resume.fileName = f.name;
+    if(!state.resume.skills.length){ state.resume.skills = DEFAULT_SKILLS.slice(); }
+    persist();
+    setTimeout(function(){
+      renderResume();
+      renderDashboard();
+      toast('Resume analyzed — profile updated.');
+    }, 250);
+  }
+
+  function renderResume(){
+    var panel = document.getElementById('extractedPanel');
+    if(!state.resume.uploaded){ panel.style.display='none'; return; }
+    panel.style.display='block';
+    document.getElementById('exFile').textContent = state.resume.fileName || 'resume.pdf';
+    renderSkillTags();
+  }
+
+  function renderSkillTags(){
+    var wrap = document.getElementById('skillTagList');
+    wrap.innerHTML = state.resume.skills.map(function(s,i){
+      return '<span class="tag" data-i="'+i+'">'+escapeHtml(s)+' ✕</span>';
+    }).join('');
+    wrap.querySelectorAll('.tag').forEach(function(t){
+      t.addEventListener('click', function(){
+        var i = parseInt(t.getAttribute('data-i'),10);
+        state.resume.skills.splice(i,1);
+        persist(); renderSkillTags(); renderDashboard();
+      });
+    });
+  }
+  document.getElementById('addSkillInput').addEventListener('keydown', function(ev){
+    if(ev.key==='Enter' && this.value.trim()){
+      state.resume.skills.push(this.value.trim());
+      this.value='';
+      persist(); renderSkillTags(); renderDashboard();
+    }
+  });
+
+  /* ---------------- ATS CHECKER ---------------- */
+  function lc(s){ return (s||'').toLowerCase(); }
+  function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+  document.getElementById('runAtsBtn').addEventListener('click', function(){
+    var role = document.getElementById('atsRoleSelect').value;
+    var jd = document.getElementById('jdText').value.trim() || SAMPLE_JD[role];
+    if(!document.getElementById('jdText').value.trim()) document.getElementById('jdText').value = jd;
+    var reqSkills = ROLE_SKILLS[role] || ROLE_SKILLS['Frontend Developer'];
+    var jdLower = lc(jd);
+    var have = (state.resume.skills.length ? state.resume.skills : DEFAULT_SKILLS).map(lc);
+
+    var matched=[], missing=[];
+    reqSkills.forEach(function(sk){
+      var mentionedInJD = jdLower.indexOf(lc(sk))>-1;
+      var haveSkill = have.indexOf(lc(sk))>-1;
+      if(mentionedInJD && haveSkill) matched.push(sk);
+      else if(mentionedInJD && !haveSkill) missing.push(sk);
+    });
+    if(matched.length===0 && missing.length===0){
+      // JD didn't literally mention role skills verbatim - fall back to full comparison
+      reqSkills.forEach(function(sk){ if(have.indexOf(lc(sk))>-1) matched.push(sk); else missing.push(sk); });
+    }
+    var score = Math.round((matched.length/(matched.length+missing.length||1))*100);
+    var formatting = [];
+    if(jd.length < 40) formatting.push('Job description looks very short — results may be less accurate.');
+    if(!/\d/.test(jd)) formatting.push('No years-of-experience figure detected in the description.');
+    if(formatting.length===0) formatting.push('No formatting issues detected.');
+
+    state.ats = {score:score, matched:matched, missing:missing};
+    persist();
+    renderAts();
+    renderDashboard();
+    document.getElementById('formatIssues').innerHTML = '<strong style="color:var(--ink);">Formatting notes:</strong><br>' + formatting.map(escapeHtml).join('<br>');
+    toast('ATS check complete — score ' + score + '.');
+  });
+
+  function renderAts(){
+    var scoreEl = document.getElementById('atsScoreNum');
+    var fill = document.getElementById('atsGaugeFill');
+    var circumference = 452;
+    if(state.ats.score===null){
+      scoreEl.textContent='—';
+      fill.style.strokeDashoffset = circumference;
+      document.getElementById('matchedKw').innerHTML = '<span style="color:var(--ink-faint); font-size:.8rem;">Run a check first</span>';
+      document.getElementById('missingKw').innerHTML = '';
+      return;
+    }
+    scoreEl.textContent = state.ats.score;
+    var offset = circumference - (circumference * state.ats.score/100);
+    fill.style.strokeDashoffset = offset;
+    document.getElementById('matchedKw').innerHTML = state.ats.matched.length ? state.ats.matched.map(function(s){ return '<span class="tag">'+escapeHtml(s)+'</span>'; }).join('') : '<span style="color:var(--ink-faint); font-size:.8rem;">None matched</span>';
+    document.getElementById('missingKw').innerHTML = state.ats.missing.length ? state.ats.missing.map(function(s){ return '<span class="tag rm">'+escapeHtml(s)+'</span>'; }).join('') : '<span style="color:var(--ink-faint); font-size:.8rem;">No gaps found</span>';
+  }
+
+  /* ---------------- INTERVIEW ---------------- */
+  var iv = { active:false, role:null, qIndex:0, scores:[] };
+  document.getElementById('startInterviewBtn').addEventListener('click', function(){
+    iv.role = document.getElementById('interviewRoleSelect').value;
+    iv.qIndex = 0; iv.scores = []; iv.active = true;
+    document.getElementById('interviewSummary').style.display='none';
+    document.getElementById('interviewLive').style.display='block';
+    showQuestion();
+  });
+
+  function showQuestion(){
+    var bank = QUESTION_BANK[iv.role] || QUESTION_BANK['Frontend Developer'];
+    var q = bank[iv.qIndex];
+    document.getElementById('qCounter').textContent = 'Question ' + (iv.qIndex+1) + ' of ' + bank.length;
+    document.getElementById('qText').textContent = q.q;
+    document.getElementById('answerText').value='';
+    document.getElementById('feedbackBox').style.display='none';
+    document.getElementById('nextQBtn').style.display='none';
+    document.getElementById('submitAnswerBtn').style.display='inline-flex';
+    document.getElementById('answerText').disabled=false;
+  }
+
+  document.getElementById('submitAnswerBtn').addEventListener('click', function(){
+    var bank = QUESTION_BANK[iv.role] || QUESTION_BANK['Frontend Developer'];
+    var q = bank[iv.qIndex];
+    var ans = document.getElementById('answerText').value.trim();
+    var ansLower = lc(ans);
+    var hits = q.k.filter(function(k){ return ansLower.indexOf(k)>-1; }).length;
+    var lengthScore = Math.min(ans.split(/\s+/).filter(Boolean).length / 40, 1);
+    var relevance = Math.min(hits / 2, 1);
+    var raw = (lengthScore*0.45 + relevance*0.55) * 10;
+    var score = ans ? Math.max(3, Math.min(10, Math.round(raw))) : 1;
+    iv.scores.push(score);
+
+    var fb;
+    if(!ans) fb = 'No answer submitted — try walking through your reasoning out loud, even briefly.';
+    else if(score>=8) fb = 'Strong answer: relevant, specific and clearly explained.';
+    else if(score>=6) fb = 'Solid answer. Add a concrete example or outcome to make it sharper.';
+    else fb = 'A bit thin — try naming the specific tools, steps or trade-offs involved.';
+
+    document.getElementById('feedbackBox').style.display='block';
+    document.getElementById('fScore').textContent = 'Score: ' + score + ' / 10';
+    document.getElementById('fText').textContent = fb;
+    document.getElementById('submitAnswerBtn').style.display='none';
+    document.getElementById('answerText').disabled=true;
+    document.getElementById('nextQBtn').style.display = 'inline-flex';
+    document.getElementById('nextQBtn').textContent = (iv.qIndex < bank.length-1) ? 'Next question →' : 'Finish session';
+  });
+
+  document.getElementById('nextQBtn').addEventListener('click', function(){
+    var bank = QUESTION_BANK[iv.role] || QUESTION_BANK['Frontend Developer'];
+    iv.qIndex++;
+    if(iv.qIndex >= bank.length){ finishInterview(); return; }
+    showQuestion();
+  });
+
+  function finishInterview(){
+    var avg = Math.round((iv.scores.reduce(function(a,b){return a+b;},0)/iv.scores.length)*10)/10;
+    state.interview.history.push({role: iv.role, avg: avg, date: new Date().toISOString().slice(0,10)});
+    persist();
+    document.getElementById('interviewLive').style.display='none';
+    document.getElementById('interviewSummary').style.display='block';
+    document.getElementById('summaryScore').textContent = avg;
+    renderInterviewHistory();
+    renderDashboard();
+    iv.active=false;
+    toast('Interview session complete — average ' + avg + '/10.');
+  }
+  document.getElementById('retakeBtn').addEventListener('click', function(){
+    document.getElementById('interviewSummary').style.display='none';
+    document.getElementById('interviewSetup').scrollIntoView({block:'nearest'});
+  });
+
+  function renderInterviewHistory(){
+    var wrap = document.getElementById('interviewHistFull');
+    if(!state.interview.history.length){ wrap.innerHTML='<div class="empty-col">No attempts yet</div>'; return; }
+    wrap.innerHTML = state.interview.history.slice().reverse().map(function(h){
+      return '<div class="hist-row"><span>'+escapeHtml(h.role)+' · '+h.date+'</span><span style="color:var(--aqua); font-weight:600;">'+h.avg+' / 10</span></div>';
+    }).join('');
+  }
+
+  /* ---------------- SKILL GAP ---------------- */
+  document.getElementById('skillgapRoleSelect').addEventListener('change', renderSkillGap);
+  function renderSkillGap(){
+    var role = document.getElementById('skillgapRoleSelect').value;
+    var req = ROLE_SKILLS[role] || ROLE_SKILLS['Frontend Developer'];
+    var have = (state.resume.skills.length ? state.resume.skills : DEFAULT_SKILLS).map(lc);
+    var bars = document.getElementById('skillBars');
+    bars.innerHTML = req.map(function(sk){
+      var got = have.indexOf(lc(sk))>-1;
+      var pct = got ? (80+Math.random()*20) : (Math.random()*35);
+      var color = got ? 'var(--aqua)' : 'var(--rose)';
+      return '<div class="bar-row"><span>'+escapeHtml(sk)+'</span><div class="bar-track"><div class="bar-fill" style="width:'+pct.toFixed(0)+'%; background:'+color+';"></div></div><span style="color:'+(got?'var(--aqua)':'var(--ink-faint)')+';">'+(got?'ready':'gap')+'</span></div>';
+    }).join('');
+    var missing = req.filter(function(sk){ return have.indexOf(lc(sk))===-1; });
+    document.getElementById('gapMissingList').innerHTML = missing.length ? missing.map(function(s){ return '<span class="tag rm">'+escapeHtml(s)+'</span>'; }).join('') : '<span style="color:var(--ink-faint); font-size:.85rem;">No gaps — you meet every requirement for this role.</span>';
+  }
+
+  /* ---------------- ROADMAP ---------------- */
+  function renderRoadmap(){
+    var track = document.getElementById('roadmapTrack');
+    var doneCount = Object.keys(state.roadmap).filter(function(k){ return state.roadmap[k]; }).length;
+    var firstIncomplete = ROADMAP_STAGES.findIndex(function(_,i){ return !state.roadmap[i]; });
+    track.innerHTML = ROADMAP_STAGES.map(function(st, i){
+      var complete = !!state.roadmap[i];
+      var isCurrent = i===firstIncomplete;
+      return '<div class="rm-stage '+(complete?'complete':'')+' '+(isCurrent?'current':'')+'">'+
+        '<div class="rm-num">'+(complete? checkIcon() : (i+1))+'</div>'+
+        '<div class="rm-card"><h4>'+escapeHtml(st.title)+'</h4><p><strong style="color:var(--ink-dim);">Goal:</strong> '+escapeHtml(st.obj)+'<br><strong style="color:var(--ink-dim);">Activity:</strong> '+escapeHtml(st.act)+'</p>'+
+        '<button class="btn '+(complete?'btn-ghost':'btn-primary')+' btn-sm" data-stage="'+i+'" style="margin-top:12px; justify-content:center;">'+(complete?'Mark incomplete':'Mark complete')+'</button></div>'+
+      '</div>';
+    }).join('');
+    track.querySelectorAll('[data-stage]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var i = btn.getAttribute('data-stage');
+        state.roadmap[i] = !state.roadmap[i];
+        persist(); renderRoadmap(); renderDashboard();
+      });
+    });
+    var pct = Math.round((doneCount/ROADMAP_STAGES.length)*100);
+    document.getElementById('roadmapProgressBar').style.width = pct+'%';
+    document.getElementById('roadmapProgressLabel').textContent = doneCount + ' / ' + ROADMAP_STAGES.length + ' complete';
+  }
+
+  /* ---------------- JOB TRACKER ---------------- */
+  var STAGES = ['Applied','Screening','Interview','Selected','Rejected'];
+  function renderJobs(){
+    var board = document.getElementById('kanbanBoard');
+    board.innerHTML = STAGES.map(function(stage){
+      var jobs = state.jobs.filter(function(j){ return j.stage===stage; });
+      return '<div class="kcol"><div class="kcol-head"><span>'+stage+'</span><span class="count">'+jobs.length+'</span></div>'+
+        (jobs.length ? jobs.map(function(j){
+          var nextIdx = STAGES.indexOf(j.stage)+1;
+          var canAdvance = j.stage!=='Selected' && j.stage!=='Rejected';
+          return '<div class="kcard"><div class="role">'+escapeHtml(j.role)+'</div><div class="co">'+escapeHtml(j.company)+'</div><div class="date">'+escapeHtml(j.date||'')+'</div>'+
+            '<div class="kcard-actions">'+
+            (canAdvance ? '<button data-advance="'+j.id+'">Advance</button>' : '<button data-advance="'+j.id+'" disabled style="opacity:.35;">Advance</button>') +
+            '<button class="del" data-del="'+j.id+'">Remove</button></div></div>';
+        }).join('') : '<div class="empty-col">Nothing here yet</div>')
+      + '</div>';
+    }).join('');
+    board.querySelectorAll('[data-advance]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var id = b.getAttribute('data-advance');
+        var job = state.jobs.find(function(j){ return j.id===id; });
+        if(!job) return;
+        var idx = STAGES.indexOf(job.stage);
+        if(idx < 2){ job.stage = STAGES[idx+1]; }
+        else { job.stage = 'Selected'; }
+        persist(); renderJobs(); renderDashboard();
+      });
+    });
+    board.querySelectorAll('[data-del]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var id = b.getAttribute('data-del');
+        state.jobs = state.jobs.filter(function(j){ return j.id!==id; });
+        persist(); renderJobs(); renderDashboard();
+      });
+    });
+  }
+  document.getElementById('addJobBtn').addEventListener('click', function(){
+    document.getElementById('jobCompany').value='';
+    document.getElementById('jobRole').value='';
+    document.getElementById('jobDate').value='';
+    document.getElementById('jobErr').textContent='';
+    document.getElementById('jobModalOverlay').classList.add('active');
+  });
+  document.getElementById('jobCancelBtn').addEventListener('click', function(){ document.getElementById('jobModalOverlay').classList.remove('active'); });
+  document.getElementById('jobModalOverlay').addEventListener('click', function(ev){ if(ev.target===this) this.classList.remove('active'); });
+  document.getElementById('jobSaveBtn').addEventListener('click', function(){
+    var co = document.getElementById('jobCompany').value.trim();
+    var role = document.getElementById('jobRole').value.trim();
+    var date = document.getElementById('jobDate').value;
+    if(!co || !role){ document.getElementById('jobErr').textContent = 'Company and role are required.'; return; }
+    state.jobs.push({id:'j'+Date.now(), company:co, role:role, date:date, stage:'Applied'});
+    persist();
+    document.getElementById('jobModalOverlay').classList.remove('active');
+    renderJobs(); renderDashboard();
+    toast('Application logged.');
+  });
+
+  /* ---------------- CHATBOT ---------------- */
+  var chatToggle = document.getElementById('chatToggle');
+  var chatPanel = document.getElementById('chatPanel');
+  var chatBody = document.getElementById('chatBody');
+  var chatSeeded = false;
+  chatToggle.addEventListener('click', function(){
+    chatPanel.classList.toggle('active');
+    if(chatPanel.classList.contains('active') && !chatSeeded){
+      addChatMsg('bot', "Hi, I'm your career assistant. Ask me about your ATS score, skill gaps, interview prep or overall progress.");
+      chatSeeded = true;
+    }
+  });
+  function addChatMsg(who, text){
+    var el = document.createElement('div');
+    el.className = 'cmsg ' + who;
+    el.textContent = text;
+    chatBody.appendChild(el);
+    chatBody.scrollTop = chatBody.scrollHeight;
+  }
+  function chatReply(msg){
+    var m = lc(msg);
+    if(!state.authed) return "Create a profile first so I can look at your actual data.";
+    if(m.indexOf('ats')>-1 || m.indexOf('score')>-1){
+      if(state.ats.score===null) return "You haven't run an ATS check yet — head to ATS Checker and paste a job description.";
+      return "Your ATS score is " + state.ats.score + "/100. Missing keywords: " + (state.ats.missing.join(', ') || 'none') + ". Add those to your resume or projects to raise it.";
+    }
+    if(m.indexOf('skill')>-1 || m.indexOf('learn')>-1 || m.indexOf('next')>-1){
+      var req = ROLE_SKILLS[state.profile.role] || ROLE_SKILLS['Frontend Developer'];
+      var have = (state.resume.skills.length ? state.resume.skills : DEFAULT_SKILLS).map(lc);
+      var missing = req.filter(function(s){ return have.indexOf(lc(s))===-1; });
+      return missing.length ? "Based on your target role, focus on: " + missing.slice(0,3).join(', ') + ". Check Skill Gap for the full picture." : "You're covering every skill typically required for " + state.profile.role + ". Nice work.";
+    }
+    if(m.indexOf('interview')>-1 || m.indexOf('prepare')>-1){
+      return state.interview.history.length ? "You've done " + state.interview.history.length + " mock interview session(s), averaging " + (state.interview.history.reduce(function(a,h){return a+h.avg;},0)/state.interview.history.length).toFixed(1) + "/10. Keep practicing weaker question types." : "You haven't run a mock interview yet — try one from the AI Interview tab, it takes about 10 minutes.";
+    }
+    if(m.indexOf('progress')>-1 || m.indexOf('roadmap')>-1 || m.indexOf('status')>-1){
+      var stagesDone = Object.keys(state.roadmap).filter(function(k){ return state.roadmap[k]; }).length;
+      return "Roadmap: " + stagesDone + "/" + ROADMAP_STAGES.length + " stages complete. Resume: " + (state.resume.uploaded?'analyzed':'not uploaded') + ". Applications tracked: " + state.jobs.length + ".";
+    }
+    if(m.indexOf('job')>-1 || m.indexOf('application')>-1){
+      return state.jobs.length ? "You're tracking " + state.jobs.length + " application(s). " + state.jobs.filter(function(j){return j.stage==='Interview';}).length + " currently at interview stage." : "No applications logged yet — add one from the Job Tracker.";
+    }
+    return "I can help with your ATS score, skill gaps, interview prep, roadmap progress or job applications — try asking about one of those.";
+  }
+  function sendChat(){
+    var input = document.getElementById('chatInput');
+    var val = input.value.trim();
+    if(!val) return;
+    addChatMsg('user', val);
+    input.value='';
+    setTimeout(function(){ addChatMsg('bot', chatReply(val)); }, reduceMotion ? 10 : 350);
+  }
+  document.getElementById('chatSendBtn').addEventListener('click', sendChat);
+  document.getElementById('chatInput').addEventListener('keydown', function(ev){ if(ev.key==='Enter') sendChat(); });
+  document.querySelectorAll('.chat-suggest button').forEach(function(b){
+    b.addEventListener('click', function(){
+      if(!chatPanel.classList.contains('active')){ chatPanel.classList.add('active'); }
+      if(!chatSeeded){ addChatMsg('bot', "Hi, I'm your career assistant."); chatSeeded=true; }
+      addChatMsg('user', b.getAttribute('data-q'));
+      setTimeout(function(){ addChatMsg('bot', chatReply(b.getAttribute('data-q'))); }, reduceMotion ? 10 : 350);
+    });
+  });
+
+  /* ---------------- LIVE CLOCK ---------------- */
+  function tickClock(){
+    var d = new Date();
+    var hh = String(d.getHours()).padStart(2,'0'), mm=String(d.getMinutes()).padStart(2,'0'), ss=String(d.getSeconds()).padStart(2,'0');
+    document.getElementById('liveClock').textContent = hh+':'+mm+':'+ss;
+  }
+  tickClock(); setInterval(tickClock, 1000);
+
+  /* ---------------- MARQUEE ---------------- */
+  var marqueeItems = ['Resume Analysis','ATS Matching','AI Mock Interviews','Skill Gap Detection','Career Roadmap','Job Tracker','Career Chatbot','Live Dashboard'];
+  var track = document.getElementById('marqueeTrack');
+  var doubled = marqueeItems.concat(marqueeItems);
+  track.innerHTML = doubled.map(function(t){ return '<span>'+t+'<span class="dot"></span></span>'; }).join('');
+  if(reduceMotion) track.style.animation = 'none';
+
+  /* ---------------- KINETIC HEADLINE (mouse parallax) ---------------- */
+  var kineticWords = document.querySelectorAll('.kinetic-word');
+  if(!reduceMotion){
+    document.querySelector('.hero').addEventListener('mousemove', function(ev){
+      var rect = this.getBoundingClientRect();
+      var cx = (ev.clientX - rect.left)/rect.width - 0.5;
+      var cy = (ev.clientY - rect.top)/rect.height - 0.5;
+      kineticWords.forEach(function(w, i){
+        var depth = (i%3+1)*6;
+        w.style.transform = 'translate('+(cx*depth)+'px,'+(cy*depth)+'px)';
+      });
+    });
+    document.querySelector('.hero').addEventListener('mouseleave', function(){
+      kineticWords.forEach(function(w){ w.style.transform='translate(0,0)'; });
+    });
+  }
+
+  /* ---------------- THREE.JS PARTICLE NETWORK ---------------- */
+  function initParticles(){
+    var canvas = document.getElementById('particleCanvas');
+    if(!window.THREE || !canvas) return;
+    var hero = document.querySelector('.hero');
+    var w = hero.clientWidth, h = hero.clientHeight;
+    var scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(60, w/h, 0.1, 1000);
+    camera.position.z = 60;
+    var renderer;
+    try{ renderer = new THREE.WebGLRenderer({canvas:canvas, alpha:true, antialias:true}); }
+    catch(e){ return; }
+    renderer.setSize(w, h);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+
+    var count = window.innerWidth < 700 ? 90 : 200;
+    var positions = new Float32Array(count*3);
+    for(var i=0;i<count;i++){
+      positions[i*3] = (Math.random()-0.5)*140;
+      positions[i*3+1] = (Math.random()-0.5)*90;
+      positions[i*3+2] = (Math.random()-0.5)*80;
+    }
+    var geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(positions,3));
+    var mat = new THREE.PointsMaterial({color:0x4fe8d0, size:1.6, transparent:true, opacity:0.85});
+    var points = new THREE.Points(geo, mat);
+    scene.add(points);
+
+    // a handful of connecting lines for network feel
+    var lineMat = new THREE.LineBasicMaterial({color:0x9b7bff, transparent:true, opacity:0.18});
+    var lineGeo = new THREE.BufferGeometry();
+    var linePositions = [];
+    for(var j=0;j<count;j+=6){
+      var a=j, b=(j+ (3+Math.floor(Math.random()*5))) % count;
+      linePositions.push(positions[a*3],positions[a*3+1],positions[a*3+2], positions[b*3],positions[b*3+1],positions[b*3+2]);
+    }
+    lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(linePositions,3));
+    var lines = new THREE.LineSegments(lineGeo, lineMat);
+    scene.add(lines);
+
+    var mouseX=0, mouseY=0;
+    hero.addEventListener('mousemove', function(ev){
+      var rect = hero.getBoundingClientRect();
+      mouseX = ((ev.clientX-rect.left)/rect.width - 0.5);
+      mouseY = ((ev.clientY-rect.top)/rect.height - 0.5);
+    });
+
+    var raf;
+    function animate(){
+      raf = requestAnimationFrame(animate);
+      points.rotation.y += 0.0009;
+      lines.rotation.y += 0.0009;
+      points.rotation.x += (mouseY*0.15 - points.rotation.x)*0.02;
+      lines.rotation.x = points.rotation.x;
+      camera.position.x += (mouseX*8 - camera.position.x)*0.02;
+      camera.lookAt(scene.position);
+      renderer.render(scene, camera);
+    }
+    if(reduceMotion){
+      renderer.render(scene, camera);
+    } else {
+      animate();
+    }
+    window.addEventListener('resize', function(){
+      var w2 = hero.clientWidth, h2 = hero.clientHeight;
+      camera.aspect = w2/h2; camera.updateProjectionMatrix();
+      renderer.setSize(w2,h2);
+    });
+  }
+  try{ initParticles(); }catch(e){ /* particle field is decorative; page works without it */ }
+
+  /* ---------------- INIT ---------------- */
+  if(state.authed){ enterApp(); } else { showLanding(); }
+})();
+</script>
+</body>
+</html>
